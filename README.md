@@ -5,6 +5,10 @@ and everything it is carrying — is stored separately from the worlds you play 
 
 **NeoForge 1.21.1** · [Report a bug](https://github.com/AtBZ-ZBtA/CharSelect/issues/new?template=bug_report.yml) · [Contributing](CONTRIBUTING.md) · [Public domain (CC0)](LICENSE)
 
+DISCLAIMER: most of this code was written by claude, Everything should work smoothly but if you have issues with the mod please submit a bug report in issues.
+
+ADDITIONALLY: Feel free to add feature requests, also submitted through issues
+
 Safe to add to a pack you already play — see
 [Adding it to a pack you already play](#adding-it-to-a-pack-you-already-play).
 
