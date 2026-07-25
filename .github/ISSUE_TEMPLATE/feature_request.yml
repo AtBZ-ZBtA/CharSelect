@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest something the mod should do
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should it do?
+      description: Describe the feature as you would explain it to another player.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?
+      description: |
+        What are you trying to do that the mod makes awkward right now? Knowing the problem
+        often leads to a better solution than the one either of us thought of first.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Anything you have tried instead?
+      description: Other mods, config changes, or workarounds that nearly do the job.
+    validations:
+      required: false

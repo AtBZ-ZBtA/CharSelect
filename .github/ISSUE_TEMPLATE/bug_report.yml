@@ -1,0 +1,81 @@
+name: Bug report
+description: Something is broken, crashing, or behaving oddly
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The log is the single most useful thing
+        you can include — most bugs in this mod are interactions with other mods, and the
+        log is usually the only way to see which one.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What went wrong, and what you expected instead.
+      placeholder: The character list crashed the game as soon as I selected my survival character.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can it be reproduced?
+      description: |
+        Enough detail that someone else can try it. If it only happens sometimes, say so —
+        that is useful information too.
+      placeholder: |
+        1. Create a survival character
+        2. Enter a world and pick up a backpack
+        3. Quit to the title screen and open the character list
+        4. Crash
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log or crash report
+      description: |
+        `logs/latest.log`, or the newest file in `crash-reports/` if the game closed.
+        Paste the whole thing, or link a https://gist.github.com if it is long.
+        Please do not attach a screenshot of the log — the text cannot be searched.
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: mod-version
+    attributes:
+      label: Character Select version
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: loader-version
+    attributes:
+      label: Minecraft and NeoForge version
+      placeholder: "1.21.1, NeoForge 21.1.243"
+    validations:
+      required: true
+
+  - type: input
+    id: modpack
+    attributes:
+      label: Modpack
+      description: Name and version, or "none" if you are running the mod on its own.
+      placeholder: All the Mods 10, v4.7
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: |
+        Config changes, whether it happens without other mods installed, screenshots of
+        visual problems — anything you think might matter.
+    validations:
+      required: false

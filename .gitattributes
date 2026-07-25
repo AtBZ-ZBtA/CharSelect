@@ -1,0 +1,15 @@
+# Normalise line endings so the repo is identical on every machine.
+* text=auto eol=lf
+
+# The Gradle wrapper script is run by sh on Linux and macOS. If it is ever committed with
+# CRLF endings it fails there with a confusing "bad interpreter" error, so pin it to LF.
+gradlew text eol=lf
+
+# Windows batch files must keep CRLF or cmd mis-parses them.
+*.bat text eol=crlf
+
+# Binary files git must not try to normalise.
+*.jar binary
+*.png binary
+*.ogg binary
+*.dat binary

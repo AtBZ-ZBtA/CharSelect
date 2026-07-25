@@ -1,0 +1,40 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+# SPDX identifier for Creative Commons Zero v1.0 Universal - the form tooling matches on.
+license = "CC0-1.0"
+issueTrackerURL = "https://github.com/AtBZ-ZBtA/CharSelect/issues"
+
+[[mods]]
+modId = "charselect"
+version = "1.0.0"
+displayName = "Character Select"
+authors = "AtomikBZ"
+# Drop a 256x256 icon.png into src/main/resources/ and it shows up in the mod list.
+logoFile = "icon.png"
+description = '''Terraria-style character slots. Your character - its nickname, skin, gamemode and inventory - is stored separately from the worlds you play it in.'''
+
+[[mixins]]
+config = "charselect.mixins.json"
+
+[[dependencies.charselect]]
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[21.1.0,)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.charselect]]
+    modId = "minecraft"
+    type = "required"
+    versionRange = "[1.21.1,1.22)"
+    ordering = "NONE"
+    side = "BOTH"
+
+# Essential provides friend-hosted worlds on top of the integrated server. We hook it
+# reflectively when present, so this stays optional and never a compile-time link.
+[[dependencies.charselect]]
+    modId = "essential"
+    type = "optional"
+    versionRange = "*"
+    ordering = "AFTER"
+    side = "CLIENT"

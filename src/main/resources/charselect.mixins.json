@@ -1,0 +1,22 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.charselect.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "PlayerListMixin"
+  ],
+  "client": [
+    "client.AbstractClientPlayerMixin",
+    "client.CreateWorldScreenMixin",
+    "client.MinecraftScreenRoutingMixin",
+    "client.WorldCreationUiStateMixin",
+    "client.WorldListEntryMixin",
+    "client.WorldSelectionListMixin"
+  ],
+  "server": [
+  ]
+}
