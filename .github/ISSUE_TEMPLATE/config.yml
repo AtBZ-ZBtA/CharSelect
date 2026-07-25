@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Compatibility with another mod
+    url: https://github.com/AtBZ-ZBtA/CharSelect/issues/new?template=bug_report.yml
+    about: Use the bug report template and name the other mod - include both mods' versions.
+  - name: How do I make my mod work with this?
+    url: https://github.com/AtBZ-ZBtA/CharSelect#for-mod-developers
+    about: Most mods need no changes at all. The README explains the extension API.

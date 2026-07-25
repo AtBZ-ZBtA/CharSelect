@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Lets you build a jar on demand from the Actions tab without pushing anything.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      # NeoForge decompiles Minecraft on the first build, which is slow. Caching it turns a
+      # ten minute job into a one minute one for everything after the first run.
+      - name: Cache Gradle and NeoForge caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      # Git on Windows does not record the executable bit, so a repo created there can ship
+      # a gradlew that Linux refuses to run. Setting it here costs nothing and avoids a
+      # confusing "permission denied" on someone else's first pull request.
+      - name: Make the wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build
+        run: ./gradlew build --no-daemon --stacktrace
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: charselect-jar
+          path: build/libs/*.jar
+          if-no-files-found: error

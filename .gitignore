@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+run/
+runs/
+logs/
+eclipse/
+bin/
+.classpath
+.project
+.settings/
+
+# Generated
+src/generated/
+repo/
+
+# Local tool settings, machine specific
+.claude/
+
