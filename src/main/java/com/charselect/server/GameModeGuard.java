@@ -24,6 +24,14 @@ import java.nio.file.Path;
  * <p>A survival character cannot reach creative or spectator by any route: not the command,
  * not the F3+F4 menu, not another mod calling the setter, and not by the world having cheats
  * enabled. Creative characters are free to move between modes.
+ *
+ * <p>The one deliberate exception is a hardcore <em>world</em>'s own permadeath mechanic,
+ * which is a different thing entirely from a hardcore <em>character</em> - see
+ * {@link CharacterProfile#isHardcore()} for that. A hardcore world locks every player who
+ * dies in it to spectator forever, vanilla behaviour with nothing to do with this mod, and
+ * that lock has to survive both the moment it happens and every reconnect after. Hardcore
+ * worlds also have commands permanently disabled by construction, so there is no other route
+ * to spectator in one for this guard to be protecting against in the first place.
  */
 @EventBusSubscriber(modid = CharSelect.MODID)
 public final class GameModeGuard {
@@ -37,7 +45,7 @@ public final class GameModeGuard {
             return;
         }
         MinecraftServer server = player.getServer();
-        if (server == null) {
+        if (server == null || isHardcorePermadeath(server, event.getNewGameMode())) {
             return;
         }
         CharacterProfile profile = CharacterSession.profileFor(server, player);
@@ -72,6 +80,13 @@ public final class GameModeGuard {
         }
 
         GameType current = player.gameMode.getGameModeForPlayer();
+        if (isHardcorePermadeath(server, current)) {
+            // Reconnecting after a hardcore death: vanilla already put them in spectator on
+            // purpose and means to keep them there. Clamping back to survival here would
+            // undo permadeath the moment they rejoined.
+            return;
+        }
+
         GameType clamped = profile.gameMode().clamp(current);
         if (clamped != current) {
             player.setGameMode(clamped);
@@ -80,27 +95,40 @@ public final class GameModeGuard {
         }
     }
 
+    private static boolean isHardcorePermadeath(MinecraftServer server, GameType mode) {
+        return mode == GameType.SPECTATOR && server.getWorldData().isHardcore();
+    }
+
     /**
      * Stamps a world's rules the first time it is loaded.
      *
      * <p>Only worlds that are genuinely new get tied to a gamemode. A world that already
      * holds player data existed before this mod did, so it is left open to every character
      * and nobody is locked out of a save they already had.
+     *
+     * <p>Gated on {@code classified} specifically, not on whether a sidecar file exists at
+     * all: other compat code (FTB Quests, for one) can legitimately write a sidecar before
+     * this ever runs, for reasons that have nothing to do with gamemode, and a file existing
+     * for that reason must not look like this method has already done its job. Composing the
+     * final value off whatever is already there, rather than constructing one from scratch,
+     * is what keeps that earlier write intact instead of being overwritten by it.
      */
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         MinecraftServer server = event.getServer();
         Path dir = worldDir(server);
-        if (WorldFlags.read(dir) != null) {
+        WorldFlags.Data current = WorldFlags.resolve(dir);
+        if (current.classified()) {
             return;
         }
 
         boolean preExisting = LegacyWorlds.hasExistingPlayerData(server);
         WorldFlags.Data data = preExisting
-                ? new WorldFlags.Data(null, false, false)
-                : new WorldFlags.Data(
-                        CharacterGameMode.forWorldType(server.getWorldData().getGameType()),
-                        PendingWorldFlags.consume(), true);
+                ? current.withClassification(null, false)
+                : current.withClassification(
+                                CharacterGameMode.forWorldType(server.getWorldData().getGameType()),
+                                PendingWorldFlags.consume())
+                        .withAdopted();
 
         if (preExisting) {
             CharSelect.LOGGER.info("{} predates this mod; leaving it open to every character",
@@ -114,7 +142,7 @@ public final class GameModeGuard {
         return WorldFlags.resolve(worldDir(server)).mode();
     }
 
-    static Path worldDir(MinecraftServer server) {
+    public static Path worldDir(MinecraftServer server) {
         return server.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
     }
 }

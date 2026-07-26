@@ -6,7 +6,7 @@ issueTrackerURL = "https://github.com/AtBZ-ZBtA/CharSelect/issues"
 
 [[mods]]
 modId = "charselect"
-version = "1.0.0"
+version = "1.0.1"
 displayName = "Character Select"
 authors = "AtomikBZ"
 # Drop a 256x256 icon.png into src/main/resources/ and it shows up in the mod list.

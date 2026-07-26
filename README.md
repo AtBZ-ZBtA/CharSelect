@@ -20,7 +20,8 @@ are even shown.
 
 - **Character slots.** Create as many as you like (32 by default, configurable). Each has a
   nickname, a skin and a gamemode, and the list shows what it is carrying, how long it has
-  been played and whether it is hardcore.
+  been played and whether it is hardcore. The list opens with your first character already
+  selected, and hover a row's detail line to scroll it if it runs past the column.
 - **Skins.** Type a Minecraft username and the skin is fetched from Mojang, upload a PNG
   from disk, or stay as Steve/Alex. A rotating paper doll shows the result as you pick —
   drag it to spin it.
@@ -57,6 +58,22 @@ is marked dead, the session is closed, and the slot stays in the list as a recor
 looked at but not played. The world itself is untouched — hardcore lives on the character,
 not the world, so a hardcore character can be taken into any survival world.
 
+This is separate from a **hardcore world** — vanilla's own permadeath ruleset, chosen for the
+whole world at creation, that locks any player who dies in it to spectator mode for good. The
+two are independent and both work: an ordinary survival character who dies in a hardcore
+world is correctly locked to spectator by vanilla, same as it would be without this mod. A
+hardcore *character* dying anywhere ends its own run regardless of what kind of world it was
+in.
+
+## Curses
+
+Character Select tracks permanent curses the same way it tracks hardcore: once true, a flag
+never clears itself. Right now that covers Enigmatic Legacy's Ring of Seven Curses, which by
+that mod's own design cannot be removed once worn — a character caught wearing it is marked
+**cursed** in the list for good. No dependency on Enigmatic Legacy; the ring is recognised by
+its item id, so nothing needs updating if that mod is not installed, and detection starts
+working automatically the moment it is.
+
 ## Cheat tracking
 
 The first time a clean survival character enters a world with cheats enabled, it warns you
@@ -72,6 +89,24 @@ the first player to enter and immediately lock them out.
 
 Only survival characters are tracked. Creative characters are cheating by definition, so
 marking them would mean nothing.
+
+## Converting a character to creative
+
+Editing a survival character offers **To Creative**, which makes a brand new creative
+character carrying a full copy of everything the original has — inventory, quest progress,
+cheat and curse history, all of it — named `{character} (creative)` by default. The original
+is left exactly as it was. This is a copy rather than an in-place switch on purpose: gamemode
+decides which worlds a character can enter, so changing it in place would either strand the
+character out of worlds it already has progress in, or hand a creative character access to
+worlds a survival player earned normally.
+
+## Maps
+
+A map's picture lives in the world that made it, not on the item — bringing one into a
+different world the way this mod lets you carry inventory around leaves it with nothing to
+draw, which vanilla already shows as a blank map rather than crashing. Character Select adds
+a line to a map's tooltip explaining why when this happens, using the same check vanilla
+itself uses to decide there is nothing there.
 
 ## How the separation works
 
@@ -192,6 +227,18 @@ No hard dependency is needed — guard the subscriber with
 event fires. Each handler gets a private compound inside the character's storage, so two
 mods can never tread on each other, and a handler that throws is logged and skipped rather
 than taking the save down with it.
+
+### For modpack authors reskinning the menu
+
+`CharacterSelectScreen` and `CharacterCreationScreen` render the same background vanilla
+gives every menu screen, including the world list — there is no code difference to fix. But
+menu-reskinning tools like FancyMenu identify screens by Java class, and they only know about
+vanilla's own classes unless a pack author tells them otherwise. A background configured for
+the singleplayer world list will not automatically apply to these two, since they are new
+classes those tools have never seen. To make a pack's reskin cover them too, target:
+
+- `com.charselect.client.gui.CharacterSelectScreen`
+- `com.charselect.client.gui.CharacterCreationScreen`
 
 ## Building
 
