@@ -27,6 +27,7 @@ public final class CharSelectConfig {
     public final ModConfigSpec.BooleanValue transferStats;
     public final ModConfigSpec.BooleanValue transferRecipeBook;
     public final ModConfigSpec.BooleanValue transferAttributes;
+    public final ModConfigSpec.BooleanValue transferQuestProgress;
 
     /** Data registered by other mods, plus any NeoForge attachment we do not recognise. */
     public final ModConfigSpec.BooleanValue transferModdedData;
@@ -40,6 +41,7 @@ public final class CharSelectConfig {
     public final ModConfigSpec.IntValue maxCharacterSlots;
     public final ModConfigSpec.BooleanValue allowSkinFetchFromMojang;
     public final ModConfigSpec.BooleanValue characterCosmeticsOnServers;
+    public final ModConfigSpec.BooleanValue showFancyMenuHint;
 
     private CharSelectConfig(ModConfigSpec.Builder builder) {
         builder.comment("Which parts of a player follow the character from world to world.",
@@ -73,6 +75,10 @@ public final class CharSelectConfig {
         transferAttributes = builder
                 .comment("Persistent attribute modifiers stored on the player.")
                 .define("attributes", true);
+        transferQuestProgress = builder
+                .comment("FTB Quests progress, if that mod is installed. Off keeps each world's",
+                         "quest progress separate, the way it behaves without this mod.")
+                .define("questProgress", true);
         transferModdedData = builder
                 .comment("Data belonging to other mods - Curios slots, backpacks, skill trees -",
                          "including any NeoForge attachment this mod does not recognise.",
@@ -128,6 +134,13 @@ public final class CharSelectConfig {
                          "but your character's nickname and skin are still shown locally. Off makes",
                          "remote servers look completely untouched.")
                 .define("characterCosmeticsOnServers", true);
+        showFancyMenuHint = builder
+                .comment("When FancyMenu is installed, show a small note in the corner of the",
+                         "character select screen saying it has not been set up to reskin this",
+                         "screen. FancyMenu identifies screens by Java class and only reskins the",
+                         "ones a pack author has explicitly configured, so a pack that only",
+                         "customises the vanilla world list will not touch this screen on its own.")
+                .define("showFancyMenuHint", true);
 
         builder.pop();
     }

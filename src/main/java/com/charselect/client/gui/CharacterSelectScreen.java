@@ -3,8 +3,11 @@ package com.charselect.client.gui;
 import com.charselect.character.ActiveCharacter;
 import com.charselect.character.CharacterProfile;
 import com.charselect.character.CharacterStore;
+import com.charselect.character.LocalAccount;
 import com.charselect.client.LegacyCharacterImport;
 import com.charselect.client.skin.SkinTextureCache;
+import com.charselect.compat.FancyMenuCompat;
+import com.charselect.config.CharSelectConfig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.PlayerSkinWidget;
@@ -150,6 +153,9 @@ public class CharacterSelectScreen extends Screen {
             return;
         }
         ActiveCharacter.select(profile);
+        // Stashed now, before any integrated server exists, for compat code that needs the
+        // real account UUID earlier than a ServerPlayer is available to read it from.
+        LocalAccount.set(this.minecraft.getGameProfile().getId());
         // The world list filters itself to this character's gamemode from here on.
         this.minecraft.setScreen(new SelectWorldScreen(this));
     }
@@ -218,6 +224,33 @@ public class CharacterSelectScreen extends Screen {
                     Component.translatable("charselect.select.empty"),
                     this.width / 2, this.height / 2 - 20, 0xA0A0A0);
         }
+
+        renderFancyMenuHint(graphics);
+    }
+
+    /**
+     * FancyMenu identifies screens by Java class and only reskins the ones a pack author has
+     * pointed it at explicitly, so a pack that customises the vanilla world list does not
+     * automatically touch this screen too. This just says so, rather than leaving a modpack
+     * author to wonder why their reskin stopped partway through character select.
+     *
+     * <p>The bottom-right corner is not actually empty - the button row's right edge (the
+     * Back button) reaches to {@code width/2 + 154}, and on a narrow enough window that
+     * leaves no real gap to its right. Rather than gamble on the text fitting and risk
+     * overlapping Back, this only draws when it demonstrably does not - dropping the hint on
+     * a cramped window is a fair trade for never drawing on top of a button.
+     */
+    private void renderFancyMenuHint(GuiGraphics graphics) {
+        if (!FancyMenuCompat.isPresent() || !CharSelectConfig.INSTANCE.showFancyMenuHint.get()) {
+            return;
+        }
+        Component hint = Component.translatable("charselect.select.fancymenu_hint");
+        int textX = this.width - this.font.width(hint) - 6;
+        int backButtonRight = this.width / 2 + 154;
+        if (textX <= backButtonRight + 6) {
+            return;
+        }
+        graphics.drawString(this.font, hint, textX, this.height - 12, 0x808080, false);
     }
 
     /** Shows what the highlighted character is carrying, under the paper doll. */

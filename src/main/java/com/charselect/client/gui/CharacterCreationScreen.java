@@ -16,6 +16,7 @@ import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.network.chat.CommonComponents;
@@ -189,14 +190,32 @@ public class CharacterCreationScreen extends Screen {
         doll.setPosition(dollX, NICKNAME_Y);
         addRenderableWidget(doll);
 
-        this.createButton = addRenderableWidget(
-                Button.builder(Component.translatable(isEditing()
-                                ? "charselect.edit.save" : "charselect.create.confirm"), b -> confirm())
-                        .bounds(this.width / 2 - 154, this.height - 28, 150, 20)
-                        .build());
-        addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, b -> onClose())
-                .bounds(this.width / 2 + 4, this.height - 28, 150, 20)
-                .build());
+        // Only a saved survival character has anything to convert - a new, unsaved one has
+        // no slot to copy from yet, and a creative character is already what this offers.
+        boolean offerConvert = isEditing() && editing.gameMode() == CharacterGameMode.SURVIVAL;
+        if (offerConvert) {
+            this.createButton = addRenderableWidget(
+                    Button.builder(Component.translatable("charselect.edit.save"), b -> confirm())
+                            .bounds(this.width / 2 - 154, this.height - 28, 100, 20)
+                            .build());
+            addRenderableWidget(
+                    Button.builder(Component.translatable("charselect.edit.convert"),
+                                    b -> convertToCreative())
+                            .bounds(this.width / 2 - 50, this.height - 28, 100, 20)
+                            .build());
+            addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, b -> onClose())
+                    .bounds(this.width / 2 + 54, this.height - 28, 100, 20)
+                    .build());
+        } else {
+            this.createButton = addRenderableWidget(
+                    Button.builder(Component.translatable(isEditing()
+                                    ? "charselect.edit.save" : "charselect.create.confirm"), b -> confirm())
+                            .bounds(this.width / 2 - 154, this.height - 28, 150, 20)
+                            .build());
+            addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, b -> onClose())
+                    .bounds(this.width / 2 + 4, this.height - 28, 150, 20)
+                    .build());
+        }
 
         updateCreateButton();
         updateFetchButton();
@@ -294,6 +313,39 @@ public class CharacterCreationScreen extends Screen {
 
     private boolean isNicknameValid(String nickname) {
         return !nickname.isEmpty() && nickname.length() <= CharacterProfile.MAX_NICKNAME_LENGTH;
+    }
+
+    /**
+     * Copies this survival character into a brand new creative one, leaving the original
+     * completely untouched. A copy rather than an in-place switch because gamemode decides
+     * which worlds a character can enter, so flipping it in place would either strand the
+     * character out of worlds it already has progress in, or - if separation is loose enough
+     * to still allow them - hand a creative character access to worlds a survival player
+     * earned normally. Two characters means both keep working exactly as they did.
+     */
+    private void convertToCreative() {
+        if (!isEditing() || editing.gameMode() != CharacterGameMode.SURVIVAL) {
+            return;
+        }
+        if (CharacterStore.get().atSlotLimit()) {
+            setStatus(Component.translatable("charselect.create.slots_full",
+                    CharSelectConfig.INSTANCE.maxCharacterSlots.get()), true);
+            return;
+        }
+
+        this.minecraft.setScreen(new ConfirmScreen(
+                confirmed -> {
+                    if (confirmed) {
+                        CharacterProfile copy = CharacterStore.get().convertToCreative(editing);
+                        this.minecraft.setScreen(CharacterCreationScreen.editing(this.lastScreen, copy));
+                    } else {
+                        this.minecraft.setScreen(this);
+                    }
+                },
+                Component.translatable("charselect.edit.convert.title", editing.nickname()),
+                Component.translatable("charselect.edit.convert.message", editing.nickname()),
+                Component.translatable("charselect.edit.convert.confirm"),
+                CommonComponents.GUI_CANCEL));
     }
 
     private void updateCreateButton() {

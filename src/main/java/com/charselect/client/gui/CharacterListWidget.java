@@ -6,6 +6,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -27,7 +28,17 @@ public class CharacterListWidget extends ObjectSelectionList<CharacterListWidget
                                List<CharacterProfile> profiles, Consumer<CharacterProfile> onConfirm) {
         super(minecraft, width, height, y, itemHeight);
         this.onConfirm = onConfirm;
-        profiles.forEach(profile -> addEntry(new CharacterEntry(profile)));
+        CharacterEntry first = null;
+        for (CharacterProfile profile : profiles) {
+            CharacterEntry entry = new CharacterEntry(profile);
+            addEntry(entry);
+            if (first == null) {
+                first = entry;
+            }
+        }
+        // Land on a usable choice immediately rather than making every visit start by
+        // clicking a row before Play does anything.
+        setSelected(first);
     }
 
     @Override
@@ -69,7 +80,17 @@ public class CharacterListWidget extends ObjectSelectionList<CharacterListWidget
                     : 0xFFFFFF;
             graphics.drawString(minecraft.font, profile.nickname(), textLeft, top + 2, nameColour, false);
             graphics.drawString(minecraft.font, subtitle(), textLeft, top + 14, 0xA0A0A0, false);
-            graphics.drawString(minecraft.font, detail(), textLeft, top + 24, 0x808080, false);
+
+            // The detail line is the one most likely to run past the column - nickname and
+            // subtitle are short by nature, but "last played / worlds / playtime" is not.
+            // Static most of the time and only worth the scissor-and-scroll cost on hover,
+            // when the player has actually asked to read the rest of it.
+            if (hovering) {
+                AbstractWidget.renderScrollingString(graphics, minecraft.font, detail(),
+                        textLeft, top + 24, left + width, top + 24 + minecraft.font.lineHeight, 0x808080);
+            } else {
+                graphics.drawString(minecraft.font, detail(), textLeft, top + 24, 0x808080, false);
+            }
         }
 
         /** Draws the skin's head, hat layer included, the way the vanilla social screen does. */
@@ -99,6 +120,11 @@ public class CharacterListWidget extends ObjectSelectionList<CharacterListWidget
                 line.append(Component.literal(" · ").withStyle(ChatFormatting.DARK_GRAY))
                     .append(Component.translatable("charselect.select.cheated")
                             .withStyle(ChatFormatting.YELLOW));
+            }
+            if (profile.isCursed()) {
+                line.append(Component.literal(" · ").withStyle(ChatFormatting.DARK_GRAY))
+                    .append(Component.translatable("charselect.select.cursed")
+                            .withStyle(ChatFormatting.DARK_PURPLE));
             }
             return line;
         }

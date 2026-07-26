@@ -47,6 +47,13 @@ public final class CharacterProfile {
     private long playtimeMillis;
 
     /**
+     * True once this character has ever been caught wearing an item that curses its owner
+     * for good, such as Enigmatic Legacy's Ring of Seven Curses. One-way, the same as
+     * {@link #hardcore}: the point of a permanent curse is that it does not come off clean.
+     */
+    private boolean cursed;
+
+    /**
      * The character's game data frozen at the moment before it first entered a cheated
      * world, so the run can be taken back. Empty when there is nothing to restore.
      */
@@ -177,6 +184,17 @@ public final class CharacterProfile {
         }
     }
 
+    // ------------------------------------------------------------------ curses
+
+    public boolean isCursed() {
+        return cursed;
+    }
+
+    /** Marks the character as permanently cursed. Does nothing if already marked. */
+    public void markCursed() {
+        this.cursed = true;
+    }
+
     // ------------------------------------------------------------------ cheat history
 
     public boolean isCheated() {
@@ -261,6 +279,7 @@ public final class CharacterProfile {
         tag.putBoolean("Dead", dead);
         tag.putLong("DiedAt", diedAt);
         tag.putLong("Playtime", playtimeMillis);
+        tag.putBoolean("Cursed", cursed);
         if (!pristine.isEmpty()) {
             tag.put("Pristine", pristine);
         }
@@ -307,6 +326,7 @@ public final class CharacterProfile {
         profile.dead = tag.getBoolean("Dead");
         profile.diedAt = tag.getLong("DiedAt");
         profile.playtimeMillis = tag.getLong("Playtime");
+        profile.cursed = tag.getBoolean("Cursed");
         profile.pristine = tag.getCompound("Pristine").copy();
         return profile;
     }

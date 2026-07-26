@@ -6,6 +6,7 @@ import com.charselect.character.CharacterProfile;
 import com.charselect.character.CharacterStore;
 import com.charselect.config.CharSelectConfig;
 import com.charselect.character.WorldSlot;
+import com.charselect.compat.EnigmaticLegacyCompat;
 import com.charselect.world.WorldFlags;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.DoubleTag;
@@ -163,6 +164,9 @@ public final class CharacterSession {
         String worldKey = worldKey(server);
         CompoundTag full = player.saveWithoutId(new CompoundTag());
 
+        // Checked against the untouched tag, before the splitter sorts anything into buckets.
+        EnigmaticLegacyCompat.checkForCurse(full, profile);
+
         PlayerDataSplitter.capture(full, profile, worldKey);
 
         if (CharSelectConfig.INSTANCE.rememberPositionPerWorld.get()) {
@@ -206,5 +210,17 @@ public final class CharacterSession {
         return CharSelectConfig.INSTANCE.transferStats.get()
                 ? sharedFile(profile, "stats.json")
                 : worldFile(profile, worldKey, "stats.json");
+    }
+
+    /**
+     * Where this character's copy of its FTB Quests progress is kept. Unlike advancements
+     * and stats, this is not redirected by overriding a factory method - FTB Quests offers
+     * no such hook - so it is a plain file copy, staged into the world before FTB Quests
+     * reads it and captured back out afterwards. See {@code FtbQuestsCompat}.
+     */
+    public static Path questsPath(CharacterProfile profile, String worldKey) {
+        return CharSelectConfig.INSTANCE.transferQuestProgress.get()
+                ? sharedFile(profile, "ftbquests.snbt")
+                : worldFile(profile, worldKey, "ftbquests.snbt");
     }
 }

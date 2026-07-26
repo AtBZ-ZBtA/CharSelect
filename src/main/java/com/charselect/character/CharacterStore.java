@@ -153,6 +153,39 @@ public final class CharacterStore {
         return profile;
     }
 
+    /**
+     * Copies a survival character into a brand new creative one, leaving the original
+     * exactly as it was. Everything travels with the copy - inventory, quest progress, cheat
+     * and curse history, per-world memory, all of it - because the point is a fork, not a
+     * blank slate wearing the same skin.
+     *
+     * <p>Built by round-tripping through the same save/load NBT this store already uses for
+     * every character, rather than a field-by-field copy constructor, so a future field
+     * added to {@link CharacterProfile} is carried over automatically instead of silently
+     * being left behind the next time someone forgets to update a manual copy.
+     */
+    public CharacterProfile convertToCreative(CharacterProfile source) {
+        CompoundTag data = source.save();
+        data.putUUID("Id", UUID.randomUUID());
+        data.putString("Nickname", source.nickname() + " (creative)");
+        data.putString("GameMode", CharacterGameMode.CREATIVE.key());
+        // Neither carries meaning for a creative character: hardcore requires being able to
+        // die in survival, and dead requires having been hardcore. Cheated and cursed are
+        // left alone deliberately - they are history the copy actually shares, and dropping
+        // them would let a cheated character's data walk into a clean-only world wearing a
+        // new gamemode as cover.
+        data.putBoolean("Hardcore", false);
+        data.putBoolean("Dead", false);
+        data.putLong("Created", System.currentTimeMillis());
+
+        CharacterProfile copy = CharacterProfile.load(data);
+        profiles.put(copy.id(), copy);
+        save(copy);
+        CharSelect.LOGGER.info("Converted '{}' ({}) into creative character '{}' ({})",
+                source.nickname(), source.id(), copy.nickname(), copy.id());
+        return copy;
+    }
+
     public void save(CharacterProfile profile) {
         Path target = charactersDir.resolve(profile.id() + CHARACTER_SUFFIX);
         Path temp = charactersDir.resolve(profile.id() + CHARACTER_SUFFIX + ".tmp");

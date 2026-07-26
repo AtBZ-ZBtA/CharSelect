@@ -18,6 +18,10 @@
   "charselect.select.delete.message": "This character and everything it is carrying will be gone for good. Your worlds are not affected.",
   "charselect.select.delete.confirm": "Delete Character",
   "charselect.select.cheated": "Cheats used",
+  "charselect.select.cursed": "Cursed",
+  "charselect.select.fancymenu_hint": "FancyMenu not set up for this screen — see docs",
+
+  "charselect.map.wrong_world": "This map was generated in a different world and cannot be used",
   "charselect.select.restore": "Restore",
   "charselect.select.restore.title": "Restore '%s' to before cheats?",
   "charselect.select.restore.message": "This character will go back to exactly how it was the moment before it first entered a world with cheats. Everything done since then is lost for good.",
@@ -73,6 +77,10 @@
 
   "charselect.edit.title": "Edit Character",
   "charselect.edit.save": "Save",
+  "charselect.edit.convert": "To Creative",
+  "charselect.edit.convert.title": "Convert '%s' to creative?",
+  "charselect.edit.convert.message": "Makes a new creative character carrying a full copy of '%s' - its inventory, progress and everything else. The original survival character is left exactly as it is, untouched.",
+  "charselect.edit.convert.confirm": "Create Creative Copy",
 
   "charselect.skin.error.empty": "That file is empty.",
   "charselect.skin.error.too_large": "That file is too large to be a skin.",
