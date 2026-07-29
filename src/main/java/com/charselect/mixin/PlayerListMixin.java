@@ -36,7 +36,7 @@ import java.util.UUID;
  * player this mod exists for.
  */
 @Mixin(PlayerList.class)
-public abstract class PlayerListMixin {
+public abstract class PlayerListMixin implements com.charselect.server.CharacterTrackerAccess {
 
     @Shadow
     @Final
@@ -109,7 +109,8 @@ public abstract class PlayerListMixin {
             return;
         }
 
-        Path path = CharacterSession.advancementsPath(profile, CharacterSession.worldKey(this.server));
+        Path path = CharacterSession.advancementsPath(this.server, player, profile,
+                CharacterSession.worldKey(this.server));
         ensureParent(path);
         PlayerAdvancements created = new PlayerAdvancements(
                 this.server.getFixerUpper(), (PlayerList) (Object) this,
@@ -133,7 +134,8 @@ public abstract class PlayerListMixin {
             return;
         }
 
-        Path path = CharacterSession.statsPath(profile, CharacterSession.worldKey(this.server));
+        Path path = CharacterSession.statsPath(this.server, player, profile,
+                CharacterSession.worldKey(this.server));
         ensureParent(path);
         ServerStatsCounter created = new ServerStatsCounter(this.server, path.toFile());
         this.stats.put(player.getUUID(), created);
@@ -146,5 +148,11 @@ public abstract class PlayerListMixin {
         } catch (IOException e) {
             CharSelect.LOGGER.error("Could not create the character data folder at {}", path, e);
         }
+    }
+
+    @Override
+    public void charselect$forgetCharacterTrackers(UUID playerId) {
+        this.advancements.remove(playerId);
+        this.stats.remove(playerId);
     }
 }

@@ -12,11 +12,10 @@
   "client": [
     "client.AbstractClientPlayerMixin",
     "client.CreateWorldScreenMixin",
+    "client.ClientLevelDisconnectMixin",
     "client.MinecraftScreenRoutingMixin",
     "client.WorldCreationUiStateMixin",
     "client.WorldListEntryMixin",
     "client.WorldSelectionListMixin"
-  ],
-  "server": [
   ]
 }

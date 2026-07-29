@@ -143,15 +143,61 @@ only consulted for worlds that existed before the mod was installed — after th
 
 ## Multiplayer
 
-Servers behave like vanilla. On any server you did not start yourself, the server owns your
-player data and your account identity, exactly as it always did. Your character supplies
-nickname and skin only, drawn locally and sent to other players who have the mod.
+On a server running the mod, you pick a character before you spawn, the same way you do in
+singleplayer. Your inventory, progress, and identity come with you.
+
+A server **without** the mod behaves exactly like vanilla: it owns your player data and your
+account identity, and your character supplies nickname and skin only. Everything below is
+exchanged over an optional payload channel, so a vanilla server simply never receives any of
+it and nothing breaks.
 
 Essential fits this without special cases. An Essential-hosted world is still an integrated
-server, so the **host** keeps the full character system while **guests** are on the ordinary
-server path — the host's world stores their data, and their character is cosmetic. Skins and
-nicknames are exchanged over an optional payload channel, so a server without the mod simply
-never receives them and nothing breaks.
+server, so the **host** keeps the full character system while **guests** take the ordinary
+server path.
+
+### Joining
+
+The first time anyone joins a fresh world, they are asked once whether items may come with
+characters from singleplayer. That answer becomes the world's `itemsTransfer` gamerule.
+
+**Creative characters require operator permission.** Bringing one onto a server is
+effectively a permanent creative-mode grant, so it needs the same permission as handing
+yourself creative would. Non-operators are refused before they spawn, with an explanation.
+Singleplayer is unaffected — a creative character works there as it always has.
+
+Your local copy of a character is what gets uploaded on join, so the server keeps it current
+while you are still connected — on every world autosave, and again the moment you quit. A
+crash or a lost connection costs a few minutes at most rather than the whole session.
+
+### Switching characters
+
+`/character reconnect` leaves the world so you can pick a different character, then
+reconnects you automatically. Servers only; in singleplayer, return to the character select
+screen instead.
+
+### Characters left behind
+
+With `charactersStayBehind` on (the default), switching away from a character or
+disconnecting leaves it standing in the world wearing its own name and skin. It is a real
+entity — punchable, killable, and it persists across a server restart. Playing it again
+removes it and puts you back exactly where it stood.
+
+Killing one is permanent in a specific way. The stand-in is replaced by a corpse that lies
+where it fell and stays there. The next time that character loads, it spawns on that spot and
+dies for real — an ordinary death with ordinary drops. A hardcore character stays gone for
+good, exactly as it always would; any other character dies once and carries on.
+
+### Gamerules
+
+| Gamerule | Default | What it does |
+| --- | --- | --- |
+| `itemsTransfer` | asked once, then remembered | Whether items may come with a character from singleplayer. Off means only nickname, skin, and gamemode travel, and the character starts with a clean server-local inventory. Enforced server-side, not trusted to the client. |
+| `charactersStayBehind` | `true` | Whether leaving a character leaves it standing in the world as a stand-in. |
+
+### Origins
+
+A character's chosen origin travels with it. With `itemsTransfer` off the origin still
+follows; with it on, unlocked powers do too.
 
 ## Configuration
 

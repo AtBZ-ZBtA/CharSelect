@@ -2,6 +2,7 @@ package com.charselect.net;
 
 import com.charselect.CharSelect;
 import com.charselect.client.ClientCosmetics;
+import com.charselect.server.StandInRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -56,6 +57,15 @@ public final class CosmeticsNetwork {
 
     // ------------------------------------------------------------------ server side
 
+    /**
+     * What the server last heard this player is playing as, for anything that needs to hand
+     * the same look to something else - a stand-in entity taking their place, most notably.
+     * Empty rather than null if nothing has been announced.
+     */
+    public static CharacterCosmetics announced(UUID playerId) {
+        return ANNOUNCED.getOrDefault(playerId, CharacterCosmetics.NONE);
+    }
+
     private static void onAnnounced(ServerPlayer sender, CharacterCosmetics cosmetics) {
         if (cosmetics.isEmpty()) {
             ANNOUNCED.remove(sender.getUUID());
@@ -67,13 +77,20 @@ public final class CosmeticsNetwork {
         CharSelect.LOGGER.debug("{} is playing as '{}'",
                 sender.getGameProfile().getName(), cosmetics.nickname());
 
-        // Tell everyone about the newcomer, and the newcomer about everyone.
+        // Tell everyone about the newcomer, and the newcomer about everyone - both every
+        // other connected player, and every stand-in currently left standing. A stand-in's
+        // own Apply only ever went out once, to whoever was online the moment it was spawned
+        // (see server.StandInRegistry's own doc comment on exactly why) - without this, a
+        // player who was not there for that broadcast, very often the departed owner
+        // reconnecting later to reclaim it, would never learn its appearance at all.
         PacketDistributor.sendToAllPlayers(new CosmeticsPayloads.Apply(sender.getUUID(), cosmetics));
         ANNOUNCED.forEach((id, existing) -> {
             if (!id.equals(sender.getUUID())) {
                 PacketDistributor.sendToPlayer(sender, new CosmeticsPayloads.Apply(id, existing));
             }
         });
+        StandInRegistry.allCosmetics().forEach((entityId, standInCosmetics) ->
+                PacketDistributor.sendToPlayer(sender, new CosmeticsPayloads.Apply(entityId, standInCosmetics)));
     }
 
     @SubscribeEvent

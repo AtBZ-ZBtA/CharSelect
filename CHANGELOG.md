@@ -1,5 +1,54 @@
 # Changelog
 
+## 1.1 — Multiplayer
+
+Character Select now works on servers. Your characters are yours, they travel with you, and
+the server keeps its own honest copy of what happened while you were on it.
+
+### Multiplayer
+
+- **Characters on servers.** Joining a server running the mod asks which character you want
+  to play before you spawn, exactly like the singleplayer picker. Your inventory, progress,
+  and identity come with you.
+- **`/gamerule itemsTransfer`** decides whether items may come with a character from
+  singleplayer onto the server. The first player to join a fresh world is asked once and
+  their answer becomes the world's setting. Off means only identity travels — nickname,
+  skin, and gamemode — and the character starts with a clean, server-local inventory. The
+  server enforces this itself rather than trusting the client.
+- **`/character reconnect`** leaves the world so you can pick a different character, then
+  reconnects you automatically. Servers only — in singleplayer just return to the character
+  select screen.
+- **Creative characters need operator permission.** Bringing a creative character onto a
+  server is effectively a permanent creative-mode grant, so it is gated behind the same
+  permission you would need to give yourself creative in the first place. Non-operators are
+  turned away at the door with an explanation, before they spawn. Singleplayer is unaffected.
+- **Your local copy stays current.** The server hands your character back while you are
+  still connected: on every world autosave, and again the moment you quit. Nothing is
+  stranded server-side waiting for a disconnect that has already happened.
+
+### Characters left behind
+
+- **`/gamerule charactersStayBehind`** (on by default) leaves a character standing in the
+  world when you switch away from it or disconnect, wearing its own name and skin. It is a
+  real entity — punchable, killable, and it persists across a server restart.
+- **Reclaiming one** puts you back exactly where it was standing.
+- **Killing one has consequences.** The stand-in is replaced by a corpse that lies where it
+  fell and stays there. The next time that character loads, it spawns on that spot and dies
+  for real — an ordinary death with ordinary drops. A hardcore character stays gone for
+  good, exactly as it always would; any other character just dies once and carries on.
+
+### Origins
+
+- **Origins integration.** A character's chosen origin travels with it. With
+  `itemsTransfer` off, the origin still follows; with it on, unlocked powers do too.
+
+### Other
+
+- Character data now saves on the world's autosave, not only when you leave, so a crash
+  costs a few minutes at most instead of a whole session.
+- Gamemode locking no longer applies to server players, so operators can change anyone's
+  gamemode normally.
+
 ## 1.0.1
 
 ### Fixes
