@@ -139,6 +139,22 @@ public final class CharacterStore {
 
     // ------------------------------------------------------------------ mutation
 
+    /**
+     * Overwrites an existing slot's in-memory and on-disk state under the same id - unlike
+     * {@link #save}, which only writes the file. Used when a server hands a character's data
+     * back after a session there, since that arrives as a freshly-loaded {@link
+     * CharacterProfile} object, not a mutation of the one already sitting in {@link #profiles}.
+     * A no-op if the id no longer names a slot - most likely because the player deleted it
+     * locally while it was away, which this must not silently undo.
+     */
+    public void update(CharacterProfile profile) {
+        if (!profiles.containsKey(profile.id())) {
+            return;
+        }
+        profiles.put(profile.id(), profile);
+        save(profile);
+    }
+
     public CharacterProfile create(String nickname, CharacterGameMode mode, SkinRef skin) {
         return create(nickname, mode, skin, false);
     }

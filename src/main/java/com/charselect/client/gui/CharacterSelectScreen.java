@@ -22,9 +22,11 @@ import net.minecraft.world.item.ItemStack;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
- * The screen that now stands between the main menu and the world list.
+ * The screen that now stands between the main menu and the world list - and, in its other
+ * mode, the screen a remote connection sees instead of ever reaching that menu at all.
  *
  * <p>Picking a character here decides which worlds the next screen will even show, so this
  * is the first choice the player makes rather than an afterthought inside a world.
@@ -41,7 +43,17 @@ public class CharacterSelectScreen extends Screen {
     /** Wide enough for the paper doll and a five-slot preview grid beneath it. */
     private static final int PANEL_WIDTH = SLOT * PREVIEW_COLUMNS;
 
+    @Nullable
     private final Screen lastScreen;
+    /**
+     * Non-null only when this screen is standing in for a remote connection's join (or a
+     * mid-game switch) instead of the ordinary pre-join picker - see {@link #forRemote}.
+     * There is no "lastScreen" to fall back to in that case: the connection is mid-handshake,
+     * not a screen stack, so choosing a character calls this directly instead of opening the
+     * world list, and Back has nothing sensible to do, so it is hidden rather than shown.
+     */
+    @Nullable
+    private final Consumer<CharacterProfile> onRemoteChosen;
 
     private CharacterListWidget list;
     private Button playButton;
@@ -52,10 +64,40 @@ public class CharacterSelectScreen extends Screen {
     private int panelLeft;
     private InventoryPreview preview = null;
     private UUID previewFor = null;
+    /**
+     * Set once a remote pick has actually been sent, so a second click cannot resubmit and
+     * the player gets some visible sign the click landed - the server's answer can take a
+     * moment, and in the meantime this screen has nothing else to show for it. Never reset
+     * within the same screen instance: whatever comes back either replaces this screen
+     * entirely or explains why it did not, so there is nothing to "unwait" for here.
+     */
+    private boolean submitted;
 
     public CharacterSelectScreen(Screen lastScreen) {
+        this(lastScreen, null);
+    }
+
+    /**
+     * The picker a remote connection sees before it ever spawns, or mid-game when switching -
+     * see {@code client.ClientCharacterJoin} and (later) the {@code /character gui} command.
+     * {@code onChosen} is called once, with the character picked; nothing about proceeding
+     * into a world happens here, since that is a network round trip this screen has no part
+     * in, not a local {@code SelectWorldScreen} push.
+     */
+    public static CharacterSelectScreen forRemote(Consumer<CharacterProfile> onChosen) {
+        return new CharacterSelectScreen(null, onChosen);
+    }
+
+    private CharacterSelectScreen(@Nullable Screen lastScreen,
+                                  @Nullable Consumer<CharacterProfile> onRemoteChosen) {
         super(Component.translatable("charselect.select.title"));
         this.lastScreen = lastScreen;
+        this.onRemoteChosen = onRemoteChosen;
+    }
+
+    /** Rebuilds this screen preserving whichever mode it is currently in. */
+    private CharacterSelectScreen reopen() {
+        return new CharacterSelectScreen(this.lastScreen, this.onRemoteChosen);
     }
 
     @Override
@@ -108,10 +150,14 @@ public class CharacterSelectScreen extends Screen {
                 Button.builder(Component.translatable("charselect.select.delete"), b -> deleteSelected())
                         .bounds(rowLeft + step * 2, lowerRowY, quarter, 20)
                         .build());
-        addRenderableWidget(
-                Button.builder(CommonComponents.GUI_BACK, b -> onClose())
-                        .bounds(rowLeft + step * 3, lowerRowY, quarter, 20)
-                        .build());
+        // Nothing to go back to on a remote connection - it is mid-handshake, not a screen
+        // stack, so a character must actually be chosen rather than backed out of.
+        if (this.onRemoteChosen == null) {
+            addRenderableWidget(
+                    Button.builder(CommonComponents.GUI_BACK, b -> onClose())
+                            .bounds(rowLeft + step * 3, lowerRowY, quarter, 20)
+                            .build());
+        }
 
         updateButtons();
     }
@@ -132,7 +178,7 @@ public class CharacterSelectScreen extends Screen {
 
     private void updateButtons() {
         CharacterProfile selected = selectedProfile();
-        boolean hasSelection = selected != null;
+        boolean hasSelection = selected != null && !this.submitted;
         // A hardcore character that died stays in the list as a record, but is not playable.
         this.playButton.active = hasSelection && selected.isPlayable();
         this.editButton.active = hasSelection;
@@ -149,7 +195,13 @@ public class CharacterSelectScreen extends Screen {
     }
 
     private void play(CharacterProfile profile) {
-        if (!profile.isPlayable()) {
+        if (!profile.isPlayable() || this.submitted) {
+            return;
+        }
+        if (this.onRemoteChosen != null) {
+            this.submitted = true;
+            updateButtons();
+            this.onRemoteChosen.accept(profile);
             return;
         }
         ActiveCharacter.select(profile);
@@ -181,7 +233,7 @@ public class CharacterSelectScreen extends Screen {
                     if (confirmed && selected.restorePristine()) {
                         CharacterStore.get().save(selected);
                     }
-                    this.minecraft.setScreen(new CharacterSelectScreen(this.lastScreen));
+                    this.minecraft.setScreen(reopen());
                 },
                 Component.translatable("charselect.select.restore.title", selected.nickname()),
                 Component.translatable("charselect.select.restore.message"),
@@ -202,7 +254,7 @@ public class CharacterSelectScreen extends Screen {
                             ActiveCharacter.clear();
                         }
                     }
-                    this.minecraft.setScreen(new CharacterSelectScreen(this.lastScreen));
+                    this.minecraft.setScreen(reopen());
                 },
                 Component.translatable("charselect.select.delete.title", selected.nickname()),
                 Component.translatable("charselect.select.delete.message"),
@@ -223,6 +275,12 @@ public class CharacterSelectScreen extends Screen {
             graphics.drawCenteredString(this.font,
                     Component.translatable("charselect.select.empty"),
                     this.width / 2, this.height / 2 - 20, 0xA0A0A0);
+        }
+
+        if (this.submitted) {
+            graphics.drawCenteredString(this.font,
+                    Component.translatable("charselect.select.waiting"),
+                    this.width / 2, this.height - 64, 0xA0A0A0);
         }
 
         renderFancyMenuHint(graphics);
@@ -304,6 +362,12 @@ public class CharacterSelectScreen extends Screen {
 
     @Override
     public void onClose() {
+        if (this.onRemoteChosen != null) {
+            // No Back button is shown in this mode (see init()), but Escape still routes
+            // here by default - there is nowhere sensible for it to go, so it does nothing
+            // rather than crashing on a null lastScreen.
+            return;
+        }
         // Backing out drops the selection so the next visit asks again.
         ActiveCharacter.clear();
         this.minecraft.setScreen(this.lastScreen);

@@ -9,6 +9,7 @@
   "charselect.select.edit": "Edit",
   "charselect.select.delete": "Delete",
   "charselect.select.empty": "No characters yet. Create one to start playing.",
+  "charselect.select.waiting": "Sent - waiting for the server...",
   "charselect.select.never_played": "Never played",
   "charselect.select.detail": "Last played %s · %s worlds · %s played",
   "charselect.select.hardcore": "Hardcore",
@@ -54,6 +55,7 @@
   "charselect.create.hardcore": "Hardcore",
   "charselect.create.hardcore.tooltip": "This character is lost for good when it dies. Survival only, and cannot be changed later.",
   "charselect.hardcore.died": "%s has died. Hardcore characters do not come back.",
+  "charselect.standin.died": "%s was killed while left behind.",
   "charselect.create.slots_full": "All %s character slots are in use.",
 
   "charselect.create.skin": "Skin",
@@ -96,5 +98,18 @@
   "charselect.skin.error.mojang_unavailable": "Mojang did not answer. Try again later.",
   "charselect.skin.error.download_failed": "The skin could not be downloaded.",
   "charselect.skin.error.offline": "Could not reach Mojang. Are you online?",
-  "charselect.skin.error.unknown": "Something went wrong loading that skin."
+  "charselect.skin.error.unknown": "Something went wrong loading that skin.",
+
+  "charselect.join.creative_needs_op": "'%s' is a creative character. Only operators can bring one onto this server.",
+  "charselect.join.items_transfer.title": "Allow items from singleplayer?",
+  "charselect.join.items_transfer.message": "You are the first to join this server. Should players be able to bring their singleplayer characters' items onto it? This can be changed later with /gamerule itemsTransfer.",
+  "charselect.join.items_transfer.allow": "Allow Items",
+  "charselect.join.items_transfer.deny": "Identity Only",
+
+  "gamerule.itemsTransfer": "Character items transfer",
+  "gamerule.charactersStayBehind": "Characters stay behind",
+
+  "charselect.command.players_only": "Only a player can use this command.",
+  "charselect.command.singleplayer_only_host": "This command is for real servers - return to the character select screen to switch here.",
+  "charselect.command.reconnecting": "Reconnecting - pick a character to continue."
 }

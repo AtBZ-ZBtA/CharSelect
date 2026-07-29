@@ -32,6 +32,15 @@ import java.nio.file.Path;
  * that lock has to survive both the moment it happens and every reconnect after. Hardcore
  * worlds also have commands permanently disabled by construction, so there is no other route
  * to spectator in one for this guard to be protecting against in the first place.
+ *
+ * <p>Singleplayer-host only, deliberately - both enforcement methods below bail out
+ * immediately for anyone else. This was written back when {@link CharacterSession#profileFor}
+ * could only ever be non-null for the integrated server's own host, so that was never an
+ * explicit check, just an accident of what the only caller could be. Now that a real
+ * dedicated-server connection resolves a profile too, leaving that assumption unstated would
+ * lock every player on a server to their character's gamemode with no way to change it - a
+ * singleplayer guarantee this mod never promised for multiplayer, where an operator (or the
+ * server itself) deciding gamemode is normal, expected vanilla behaviour.
  */
 @EventBusSubscriber(modid = CharSelect.MODID)
 public final class GameModeGuard {
@@ -45,7 +54,8 @@ public final class GameModeGuard {
             return;
         }
         MinecraftServer server = player.getServer();
-        if (server == null || isHardcorePermadeath(server, event.getNewGameMode())) {
+        if (server == null || !server.isSingleplayerOwner(player.getGameProfile())
+                || isHardcorePermadeath(server, event.getNewGameMode())) {
             return;
         }
         CharacterProfile profile = CharacterSession.profileFor(server, player);
@@ -71,7 +81,7 @@ public final class GameModeGuard {
             return;
         }
         MinecraftServer server = player.getServer();
-        if (server == null) {
+        if (server == null || !server.isSingleplayerOwner(player.getGameProfile())) {
             return;
         }
         CharacterProfile profile = CharacterSession.profileFor(server, player);

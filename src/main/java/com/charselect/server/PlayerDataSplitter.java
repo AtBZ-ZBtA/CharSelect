@@ -136,7 +136,12 @@ public final class PlayerDataSplitter {
         CompoundTag shared = profile.sharedData();
         WorldSlot slot = profile.peekWorldSlot(worldKey);
 
-        if (shared.isEmpty() && (slot == null || slot.data().isEmpty())) {
+        // A slot can meaningfully exist holding only a remembered position and no other NBT
+        // yet (a character reclaimed from a stand-in that never captured anything else in
+        // this world) - checking data() alone would treat that as "nothing to load" and
+        // silently discard the position along with the rest of applyPosition never running.
+        boolean slotEmpty = slot == null || (slot.data().isEmpty() && !slot.hasPosition());
+        if (shared.isEmpty() && slotEmpty) {
             return null;
         }
 
@@ -156,6 +161,21 @@ public final class PlayerDataSplitter {
                     CompoundTag combined = merged.getCompound(AttachmentDataHandler.ATTACHMENTS_KEY);
                     worldAttachments.getAllKeys()
                             .forEach(k -> combined.put(k, worldAttachments.get(k).copy()));
+                    continue;
+                }
+                // A world slot can still be holding a key that the config now keeps with the
+                // character instead - left behind by an older config, or by an older build that
+                // sorted it differently. Letting that shadow the shared copy is how a character
+                // ends up with a separate, frozen inventory per world: whatever it picks up
+                // anywhere else is filed into the shared bucket and then overwritten right back
+                // out on every load, so singleplayer and a server can never see each other's.
+                // Capture rewrites the slot without the stale key, so this self-heals on save.
+                if (!isWorldScoped(key)
+                        && !HANDLER_BUCKET.equals(key)
+                        && !AttachmentDataHandler.ATTACHMENTS_KEY.equals(key)
+                        && merged.contains(key)) {
+                    CharSelect.LOGGER.warn("Ignoring a stale world-local '{}' for '{}' in {} - "
+                            + "that data follows the character now", key, profile.nickname(), worldKey);
                     continue;
                 }
                 merged.put(key, value.copy());
@@ -183,6 +203,20 @@ public final class PlayerDataSplitter {
         merged.remove(HANDLER_BUCKET);
         DROPPED.forEach(merged::remove);
         return merged;
+    }
+
+    /**
+     * Every NBT key any of the transfer categories above might place in shared/world-slot
+     * data, plus modded attachments. Used by the dedicated-server join upload to strip a
+     * character down to identity-only when the {@code itemsTransfer} gamerule is off -
+     * deriving this from {@link #GROUPS} directly means a new transfer category never needs
+     * a second, easily-forgotten update here.
+     */
+    public static Set<String> itemBearingKeys() {
+        Set<String> keys = new java.util.HashSet<>();
+        GROUPS.forEach(group -> keys.addAll(group.keys()));
+        keys.add(AttachmentDataHandler.ATTACHMENTS_KEY);
+        return keys;
     }
 
     private static CompoundTag handlerBucket(CompoundTag bucket) {

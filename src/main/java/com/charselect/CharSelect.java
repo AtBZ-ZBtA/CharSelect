@@ -2,6 +2,8 @@ package com.charselect;
 
 import com.charselect.compat.EssentialCompat;
 import com.charselect.config.CharSelectConfig;
+import com.charselect.config.ModGameRules;
+import com.charselect.entity.ModEntityTypes;
 import com.charselect.server.CharacterDataRegistry;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -26,6 +28,10 @@ public class CharSelect {
 
     public CharSelect(IEventBus modEventBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.COMMON, CharSelectConfig.SPEC);
+        // Must happen before any GameRules instance can be constructed (i.e. before any
+        // world), since registration is a side effect of this class loading.
+        ModGameRules.init();
+        ModEntityTypes.ENTITY_TYPES.register(modEventBus);
         modEventBus.addListener(this::commonSetup);
     }
 
