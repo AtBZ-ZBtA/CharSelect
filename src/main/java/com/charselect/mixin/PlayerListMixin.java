@@ -36,7 +36,10 @@ import java.util.UUID;
  * player this mod exists for.
  */
 @Mixin(PlayerList.class)
-public abstract class PlayerListMixin implements com.charselect.server.CharacterTrackerAccess {
+public abstract class PlayerListMixin implements com.charselect.server.PlayerSaveAccess {
+
+    @Shadow
+    protected abstract void save(ServerPlayer player);
 
     @Shadow
     @Final
@@ -151,8 +154,7 @@ public abstract class PlayerListMixin implements com.charselect.server.Character
     }
 
     @Override
-    public void charselect$forgetCharacterTrackers(UUID playerId) {
-        this.advancements.remove(playerId);
-        this.stats.remove(playerId);
+    public void charselect$savePlayer(ServerPlayer player) {
+        this.save(player);
     }
 }

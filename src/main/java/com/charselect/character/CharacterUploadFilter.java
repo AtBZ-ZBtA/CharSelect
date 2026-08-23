@@ -34,6 +34,11 @@ public final class CharacterUploadFilter {
         for (int i = 0; i < worlds.size(); i++) {
             strip(worlds.getCompound(i).getCompound("Data"));
         }
+        // Cosmetic armour is its own field rather than a key inside those buckets, so the
+        // sweep above never reaches it. It still counts as items: those four slots hold real
+        // stacks a player can take back out, so a server that refuses items has to refuse
+        // these too, or they would be the one way to walk items past the gamerule.
+        copy.remove("CosmeticArmor");
         return CharacterProfile.load(copy);
     }
 
