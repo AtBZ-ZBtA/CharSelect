@@ -54,6 +54,20 @@ public final class CharacterProfile {
     private boolean cursed;
 
     /**
+     * This character's Cosmetic Armor Reworked loadout, or empty if it has none.
+     *
+     * <p>A field of its own rather than a key inside {@link #sharedData}, because that bucket
+     * is rebuilt wholesale from the player's NBT on every capture - anything put there by hand
+     * is wiped on the next save. This data cannot come from player NBT at all: Cosmetic Armor
+     * keeps it in its own file, so {@code compat.CosmeticArmorCompat} reads it off disk and
+     * parks it here instead. Being part of the profile is what makes it travel between
+     * singleplayer and a server, the same way inventory does; a side file would have stayed
+     * server-local. Stripped along with real items when {@code itemsTransfer} is off - see
+     * {@link CharacterUploadFilter} - since those slots hold real, retrievable items.
+     */
+    private CompoundTag cosmeticArmor = new CompoundTag();
+
+    /**
      * The character's game data frozen at the moment before it first entered a cheated
      * world, so the run can be taken back. Empty when there is nothing to restore.
      */
@@ -195,6 +209,17 @@ public final class CharacterProfile {
         this.cursed = true;
     }
 
+    // ------------------------------------------------------------------ cosmetic armour
+
+    /** This character's stored Cosmetic Armor loadout; empty if it has none. */
+    public CompoundTag cosmeticArmor() {
+        return cosmeticArmor;
+    }
+
+    public void setCosmeticArmor(CompoundTag cosmeticArmor) {
+        this.cosmeticArmor = cosmeticArmor == null ? new CompoundTag() : cosmeticArmor;
+    }
+
     // ------------------------------------------------------------------ cheat history
 
     public boolean isCheated() {
@@ -280,6 +305,9 @@ public final class CharacterProfile {
         tag.putLong("DiedAt", diedAt);
         tag.putLong("Playtime", playtimeMillis);
         tag.putBoolean("Cursed", cursed);
+        if (!cosmeticArmor.isEmpty()) {
+            tag.put("CosmeticArmor", cosmeticArmor);
+        }
         if (!pristine.isEmpty()) {
             tag.put("Pristine", pristine);
         }
@@ -327,6 +355,7 @@ public final class CharacterProfile {
         profile.diedAt = tag.getLong("DiedAt");
         profile.playtimeMillis = tag.getLong("Playtime");
         profile.cursed = tag.getBoolean("Cursed");
+        profile.cosmeticArmor = tag.getCompound("CosmeticArmor").copy();
         profile.pristine = tag.getCompound("Pristine").copy();
         return profile;
     }

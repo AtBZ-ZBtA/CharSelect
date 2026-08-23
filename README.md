@@ -199,6 +199,34 @@ good, exactly as it always would; any other character dies once and carries on.
 A character's chosen origin travels with it. With `itemsTransfer` off the origin still
 follows; with it on, unlocked powers do too.
 
+## Mod integrations
+
+Most mods need nothing — anything stored in player NBT or a NeoForge data attachment is
+handled automatically. These are the ones that keep their data somewhere else and so needed
+explicit support:
+
+| Mod | What follows the character |
+| --- | --- |
+| **Curios** | Curio slots, via its data attachment. Set `transfer.worldLocalData` to `["curios:inventory"]` to keep them world-local instead. |
+| **Origins** | The chosen origin, and unlocked powers when `itemsTransfer` is on. |
+| **FTB Quests** | Quest progress. Singleplayer only — see `transfer.questProgress`. |
+| **Cosmetic Armor Reworked** | The cosmetic loadout, travelling with the character like inventory does. |
+
+**Cosmetic Armor Reworked** keeps its loadout in `<world>/playerdata/<uuid>.cosarmor`, keyed
+by account rather than character, so without this every character on one account shared a
+single cosmetic loadout. It is now stored on the character and travels with it, including
+between singleplayer and servers.
+
+Because it travels, it counts as items: those four slots hold real stacks you can take back
+out, so the loadout is stripped along with the rest of your items on a server with
+`itemsTransfer` off. Otherwise cosmetic slots would be the one way to walk items past that
+gamerule.
+
+One thing worth knowing: a cosmetic loadout that predates this mod is cleared rather than
+adopted by the first character to play, because there is no reliable way to tell "left over
+from before" apart from "belongs to another character", and guessing wrong would hand one
+character's armour to another.
+
 ## Configuration
 
 `config/charselect-common.toml`:

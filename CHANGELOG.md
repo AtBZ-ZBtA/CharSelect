@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.1.1
+
+### New
+
+- **Cosmetic Armor Reworked integration.** Cosmetic armour now follows the character, and
+  travels with it between singleplayer and servers the same way your inventory does.
+  Previously it was stored per account, so every character on one account shared a single
+  cosmetic loadout and switching characters left the last one's armour on.
+
+  Because it travels, it counts as items — those four slots hold real stacks you can take
+  back out — so it is stripped along with the rest of your items on a server with
+  `itemsTransfer` off. A cosmetic loadout from before the mod was installed is cleared
+  rather than adopted by the first character to play, since there is no reliable way to tell
+  "left over from before" apart from "belongs to another character".
+
+### Fixes
+
+- **Singleplayer no longer loses the last moments before you quit.** Quitting to the title
+  screen cleared the active character while the world was still shutting down, so the final
+  save had no character to write to. Autosaves hid most of it, but anything done since the
+  last autosave was silently dropped.
+
 ## 1.1 — Multiplayer
 
 Character Select now works on servers. Your characters are yours, they travel with you, and
@@ -37,7 +59,7 @@ the server keeps its own honest copy of what happened while you were on it.
   for real — an ordinary death with ordinary drops. A hardcore character stays gone for
   good, exactly as it always would; any other character just dies once and carries on.
 
-### Origins
+### Mod integrations
 
 - **Origins integration.** A character's chosen origin travels with it. With
   `itemsTransfer` off, the origin still follows; with it on, unlocked powers do too.

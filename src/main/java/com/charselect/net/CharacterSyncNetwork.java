@@ -3,7 +3,9 @@ package com.charselect.net;
 import com.charselect.CharSelect;
 import com.charselect.character.CharacterProfile;
 import com.charselect.client.ClientCharacterSync;
+import com.charselect.compat.CosmeticArmorCompat;
 import com.charselect.server.CharacterSession;
+import com.charselect.server.PlayerSaveAccess;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -50,6 +52,15 @@ public final class CharacterSyncNetwork {
         if (profile == null) {
             return;
         }
+        // Run vanilla's own save for this player first. That is what fires
+        // PlayerEvent.SaveToFile, and mods that keep player data in their own files only write
+        // it when it does - Cosmetic Armor Reworked being the one this mod integrates with.
+        // Without this the loadout handed back would be whatever was on disk when the player
+        // logged in: the version the mod writes on logout is produced long after this packet,
+        // because the client has to still be connected to receive the answer at all.
+        ((PlayerSaveAccess) server.getPlayerList()).charselect$savePlayer(player);
+        CosmeticArmorCompat.captureInto(server, player, profile);
+
         CharacterSession.capture(server, player);
         CharacterSession.pushToClient(server, player, profile);
     }

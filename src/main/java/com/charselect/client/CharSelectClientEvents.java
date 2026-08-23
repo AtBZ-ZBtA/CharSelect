@@ -56,13 +56,23 @@ public final class CharSelectClientEvents {
         // with nothing attached to it. Treating that as a real logout cleared the character the
         // player had just picked, moments before the world loaded them - and with no active
         // character, CharacterSession#isEngaged says no, the load hook stands down, and vanilla
-        // reads the player straight out of level.dat. That is the whole character system
-        // silently switching itself off, and it looks exactly like items being tied to the
-        // world rather than the character.
+        // reads the player straight out of level.dat.
         //
-        // The singleplayer server is no help in telling those apart here: the old session is
-        // already gone and the new one has not started, so it reads null either way.
-        if (event.getPlayer() != null && Minecraft.getInstance().getSingleplayerServer() == null) {
+        // Whether this was a singleplayer session is read off the connection, not off
+        // Minecraft#getSingleplayerServer. That getter is worse than useless here: vanilla
+        // nulls the field a few lines *before* firing this event, so during a singleplayer
+        // quit it reads exactly like a remote one. Clearing on that basis wiped the selection
+        // while the integrated server was still shutting down and still needed it - which cost
+        // the shutdown save its character data (the last moments before quitting simply went
+        // missing, masked by the autosave) and stopped the Cosmetic Armor hook resolving a
+        // profile at all. A memory connection is a local one by construction, whatever the
+        // shutdown has already torn down.
+        //
+        // Singleplayer still clears its selection, just later and deliberately - ScreenRouter
+        // does it on the way back to the title screen, once nothing server-side needs it.
+        boolean singleplayerSession = event.getConnection() != null
+                && event.getConnection().isMemoryConnection();
+        if (event.getPlayer() != null && !singleplayerSession) {
             // A remote connection's character selection is cosmetics-only scaffolding (see
             // ActiveCharacter's own doc comment) and must not silently follow the player into
             // a different server or back into singleplayer. The singleplayer/Essential-host
